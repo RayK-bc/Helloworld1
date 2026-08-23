@@ -1,0 +1,44 @@
+name: FastAPI CI & Performance Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Unit Tests with Pytest
+      run: |
+        pytest -v
+
+    - name: Start FastAPI Server in Background
+      run: |
+        uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+        sleep 3
+
+    - name: Run Locust Performance Benchmark
+      run: |
+        locust -f locustfile.py --headless -u 20 -r 5 --run-time 10s --host http://127.0.0.1:8000 --csv=locust_result
+
+    - name: Upload Locust Performance Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: locust-performance-report
+        path: locust_result*.csv
