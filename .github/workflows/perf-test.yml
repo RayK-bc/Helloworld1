@@ -45,6 +45,7 @@ jobs:
         uses: grafana/k6-action@v0.3.1
         with:
           filename: loadtest.js
+          options: --add-host=host.docker.internal:host-gateway
          
 
       - name: 5. 上傳 HTML 壓測報告
