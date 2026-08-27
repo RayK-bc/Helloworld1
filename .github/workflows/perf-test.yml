@@ -1,0 +1,42 @@
+name: Automated Performance Test (Python)
+
+on: [push, pull_request]
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. 下載 GitHub Repo 程式碼
+        uses: actions/checkout@v4
+
+      - name: 2. 設定 Python 環境 (替換原本的 .NET)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # 可填寫你使用的 Python 版本，如 3.10 / 3.11 / 3.12
+
+      - name: 3. 安裝 Python 套件並用 Uvicorn 啟動 FastAPI
+        run: |
+          pip install --upgrade pip
+          
+          # 安裝 requirements.txt 依賴 + 強制確保有 FastAPI 同 Uvicorn
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install fastapi uvicorn
+          
+          # 啟動 FastAPI 服務跑在 8000 Port (背景執行)
+          uvicorn main:app --host 0.0.0.0 --port 8000 &
+          
+          # 等待 5 秒確保 Server 完全啟動
+          sleep 5
+
+      - name: 4. 執行 k6 壓測腳本
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: loadtest.js
+          flags: --allow-skipping-null-check
+
+      - name: 5. 上傳 HTML 壓測報告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-report
+          path: summary.html
