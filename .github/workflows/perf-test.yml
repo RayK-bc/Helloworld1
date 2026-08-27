@@ -42,10 +42,8 @@ jobs:
           fi
 
       - name: 4. 執行 k6 壓測腳本
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: loadtest.js
-          options: --network host
+        run: |
+          docker run --rm -i --network host -v ${{ github.workspace }}:/workspace -w /workspace grafana/k6 run loadtest.js
          
 
       - name: 5. 上傳 HTML 壓測報告
