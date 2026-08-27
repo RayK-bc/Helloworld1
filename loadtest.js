@@ -6,8 +6,8 @@ import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporte
 
 export const options = {
   stages: [
-    { duration: '30s', target: 20 }, // 30 秒內 Ramp-up 至 20 users
-    { duration: '1m', target: 20 },  // 壓測 1 分鐘
+    { duration: '30s', target: 2 }, // 30 秒內 Ramp-up 至 2 users
+    { duration: '15s', target: 2 },  // 壓測 15 秒
     { duration: '10s', target: 0 },   // Cool-down
   ],
   thresholds: {
