@@ -18,16 +18,28 @@ jobs:
       - name: 3. 安裝 Python 套件並用 Uvicorn 啟動 FastAPI
         run: |
           pip install --upgrade pip
-          
-          # 安裝 requirements.txt 依賴 + 強制確保有 FastAPI 同 Uvicorn
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install fastapi uvicorn
-          
-          # 啟動 FastAPI 服務跑在 8000 Port (背景執行)
-          uvicorn main:app --host 0.0.0.0 --port 8000 &
-          
-          # 等待 5 秒確保 Server 完全啟動
-          sleep 5
+          pip install fastapi uvicorn requests
+
+          # 背景啟動 Uvicorn 並將 Log 寫入 app.log 方便排查
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+
+          # 等待最多 15 秒，確保 8000 Port 真的活著
+          echo "Waiting for FastAPI to start..."
+          for i in {1..15}; do
+            if curl -s http://localhost:8000/api/v1/ping?host=127.0.0.1 > /dev/null; then
+              echo "FastAPI is UP!"
+              break
+            fi
+            sleep 1
+          done
+
+          # 如果 startup 失敗，印出 app.log 睇下係咩錯
+          if ! curl -s http://localhost:8000/api/v1/ping?host=127.0.0.1 > /dev/null; then
+            echo "--- FastAPI Failed to Start. Showing app.log: ---"
+            cat app.log
+            exit 1
+          fi
 
       - name: 4. 執行 k6 壓測腳本
         uses: grafana/k6-action@v0.3.1
