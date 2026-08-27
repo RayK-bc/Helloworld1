@@ -16,7 +16,7 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get('http://localhost:8000/api/v1/ping?host=127.0.0.1');
+  const res = http.get('http://localhost:8000/api/v1/?host=127.0.0.1');
 
   check(res, {
     'status is 200': (r) => r.status === 200,
