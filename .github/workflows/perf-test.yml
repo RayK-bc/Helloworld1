@@ -21,8 +21,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install fastapi uvicorn requests
 
-          # 背景啟動 Uvicorn 並將 Log 寫入 app.log 方便排查
-          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+    # 加上 --app-dir . 確保 Uvicorn 能夠正確找到 app.main:app
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir . > app.log 2>&1 &
 
           # 等待最多 15 秒，確保 8000 Port 真的活著
           echo "Waiting for FastAPI to start..."
