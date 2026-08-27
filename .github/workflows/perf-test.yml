@@ -21,10 +21,15 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install fastapi uvicorn requests
 
-    # 加上 --app-dir . 確保 Uvicorn 能夠正確找到 app.main:app
-          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir . > app.log 2>&1 &
+          # 印出當前目錄檔案，確保 main.py 存在
+          echo "=== Current Directory Files ==="
+          ls -la
 
-          # 等待最多 15 秒，確保 8000 Port 真的活著
+          # 強制將當前目錄加入 PYTHONPATH 並背景啟動 Uvicorn
+          export PYTHONPATH=$PYTHONPATH:.
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+
+          # 等待最多 15 秒檢查 API 是否啟動
           echo "Waiting for FastAPI to start..."
           for i in {1..15}; do
             if curl -s http://localhost:8000/api/v1/ping?host=127.0.0.1 > /dev/null; then
@@ -34,7 +39,7 @@ jobs:
             sleep 1
           done
 
-          # 如果 startup 失敗，印出 app.log 睇下係咩錯
+          # 若啟動失敗則印出 app.log
           if ! curl -s http://localhost:8000/api/v1/ping?host=127.0.0.1 > /dev/null; then
             echo "--- FastAPI Failed to Start. Showing app.log: ---"
             cat app.log
